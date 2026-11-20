@@ -59,7 +59,7 @@ table{width:100%;border-collapse:collapse}
 th,td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--r2);font-size:.85rem}
 .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
-@media print{header,.steps,.nav,.noprint{display:none!important}body{background:#fff}}
+@media print{header,.steps,.nav,.noprint{display:none!important}body{background:#fff}.card{box-shadow:none!important;border:0!important;padding:0!important}main{padding:0!important;max-width:none!important;margin:0!important}}@page{size:A4;margin:8mm}
 </style>
 </head>
 <body>
@@ -91,6 +91,15 @@ th{color:var(--r2);font-size:.85rem}
    <div id="techBox" class="hidden"><h3>Virkkaustekniikka</h3><div class="chips" id="techs"></div></div>
    <div style="margin-top:10px"><label>Työn nimi</label><input id="pname" placeholder="esim. Olohuoneen matto" oninput="S.name=this.value"></div>
   </div>
+  <div class="note"><h3 style="margin:0 0 6px">🧍 Vartalon muoto</h3>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="bodyShape" style="width:auto;flex:1;min-width:160px" onchange="shapeRec()"><option value="">– valitse vartalon muoto –</option><option value="hourglass">Tiimalasi (kapea vyötärö)</option><option value="pear">Päärynä (lantio leveämpi)</option><option value="apple">Omena (täyteläinen keskivartalo)</option><option value="rect">Suorakaide (vyötärö ja lantio samaa luokkaa)</option><option value="invtri">Käänteinen kolmio (leveät hartiat/rinta)</option><option value="athletic">Urheilullinen / lihaksikas</option></select>
+   <button class="btn sec sm" onclick="shapeDetect()">Tunnista mitoista</button></div>
+   <div id="shapeTxt" style="margin-top:6px"></div><button class="btn sm hidden" id="shapeApply" onclick="shapeApply()">Käytä suositusta (väljyys + rakenne)</button></div>
+  <div class="note"><h3 style="margin:0 0 6px">📷 Mallikuvat</h3><div>Lisää kuvia mallista (esim. villapaita tai villatakki). Voit muuttaa minkä tahansa niistä pikselikuvioksi.</div>
+   <input type="file" id="refFile" accept="image/*" multiple onchange="refAdd(this)"><div id="refs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"></div></div>
+  <div class="note"><h3 style="margin:0 0 6px">📄 Ostettu ohje (teksti + kuva)</h3><div>Lisää ohjeen teksti (tekstitiedosto tai liitä alle) ja kuva. Ohjelma skaalaa silmukka- ja kerrosmäärät mittojesi, väljyytesi ja tiheytesi mukaan (vaihe 6).</div>
+   <input type="file" id="patFile" accept=".txt,.md,image/*" onchange="patAdd(this)"><textarea id="p_txt" rows="5" placeholder="Liitä ohjeen teksti tähän, esim. 'Luo 88 s ... neulo 120 krs'" style="width:100%"></textarea>
+   <div class="grid2"><div><label>Ohjeen valmiin työn ympärys (cm)</label><input type="number" id="p_chest" placeholder="esim. 100"></div><div><label>Ohjeen valmiin työn pituus (cm)</label><input type="number" id="p_len" placeholder="esim. 60"></div><div><label>Ohjeen tiheys: s / 10 cm</label><input type="number" id="p_st" step="0.5" placeholder="esim. 20"></div><div><label>Ohjeen tiheys: krs / 10 cm</label><input type="number" id="p_rw" step="0.5" placeholder="esim. 28"></div></div></div>
   <div class="nav"><span></span><button class="btn" onclick="next1()">Seuraava →</button></div>
  </div>
 
@@ -101,6 +110,7 @@ th{color:var(--r2);font-size:.85rem}
       <button class="btn sec sm" onclick="impP()">Tuo mitat</button><button class="btn sec sm" onclick="saveToPerson()">Tallenna nämä henkilölle</button><button class="btn sec sm" onclick="go(7)">Hallitse</button><select id="kidSel" onchange="kidFill()" style="width:auto"><option value="">Lasten oletusmitat…</option><option value="62">Koko 62</option><option value="74">Koko 74</option><option value="86">Koko 86</option><option value="98">Koko 98</option><option value="110">Koko 110</option><option value="122">Koko 122</option><option value="134">Koko 134</option><option value="146">Koko 146</option><option value="158">Koko 158</option></select></div>
      <div id="mSweater"><label>Neulemalli / rakenne</label>
      <select id="m_meth" onchange="calcM()"><option value="topdown">Raglan (suljettu neule)</option><option value="fitted">Istuva malli, vyötärömuotoilu (suljettu neule)</option><option value="yoke">Pyöreäpassinen (suljettu neule)</option><option value="saddle">Satulaolkainen</option><option value="flat">Perinteinen: osat erikseen ja ommellaan</option></select>
+          <div class="grid2" style="margin-top:8px"><div><label>Etuosa</label><select id="m_front" onchange="calcM()"><option value="auto">Automaattinen (villatakki = steekki)</option><option value="closed">Pusero, suljettu etu</option><option value="cardi">Villatakki, steekkaus edessä</option></select></div><div><label>Steekin leveys (silmukkaa)</label><input type="number" id="m_steek" value="7" min="3" max="13" oninput="calcM()"></div></div>
      <div class="grid2" style="margin-top:8px">
     <div><label>Rinnanympärys (cm)</label><input type="number" id="m_chest" value="96" oninput="calcM()"></div>
     <div><label>Vaatteen pituus (cm)</label><input type="number" id="m_len" value="60" oninput="calcM()"></div>
@@ -126,10 +136,11 @@ th{color:var(--r2);font-size:.85rem}
    <div class="chips" id="partChips"></div></div>
    <div id="mLeg" class="hidden"><h3 id="legT">Housun ja sukan mitat</h3>
     <div class="grid2">
-     <div><label>Väljyys (%)</label><input type="number" id="l_ease" value="5"></div>
+     <div><label>Väljyys: <b id="leV">5</b> %</label><input type="range" id="l_ease" min="-5" max="25" value="5"></div>
      <div class="lp"><label>Vyötärönympärys (cm)</label><input type="number" id="l_waist" value="80"></div>
      <div class="lp"><label>Lantionympärys (cm)</label><input type="number" id="l_hip" value="100"></div>
-     <div class="lp"><label>Haaravälin pituus (cm)</label><input type="number" id="l_rise" value="27"></div>
+     <div class="lp"><label>Haaravälin pituus, istuen (cm)</label><input type="number" id="l_rise" value="27"></div>
+     <div class="lp"><label>Kokonaismitta: vyötärö edestä haaran kautta taakse vyötärölle (cm)</label><input type="number" id="l_totrise" value="68" oninput="calcM()"></div>
      <div class="lp"><label>Reisiympärys (cm)</label><input type="number" id="l_thigh" value="58"></div>
      <div class="lp"><label>Polviympärys (cm)</label><input type="number" id="l_knee" value="38"></div>
      <div class="lp"><label>Sisäsauman pituus (cm)</label><input type="number" id="l_inseam" value="78"></div>
@@ -137,7 +148,7 @@ th{color:var(--r2);font-size:.85rem}
      <div class="ls"><label>Jalkaterän ympärys (cm)</label><input type="number" id="l_footc" value="22"></div>
      <div class="ls"><label>Jalan pituus (cm)</label><input type="number" id="l_foot" value="25"></div>
      <div class="ls"><label>Varren pituus (cm)</label><input type="number" id="l_shaft" value="18"></div>
-    </div></div>
+    </div><div id="crInfo"></div></div>
   </div>
   <div id="mItem"><div class="grid2">
     <div><label>Leveys (cm)</label><input type="number" id="i_w" value="60" oninput="calcM()"></div>
@@ -199,8 +210,9 @@ th{color:var(--r2);font-size:.85rem}
   <div class="grid2">
    <div><label>Henkilö (mittapankista)</label><select id="sPer"></select></div>
    <div><label>Kenelle</label><select id="sCat" onchange="sewGar()"></select></div>
-   <div><label>Vaate</label><select id="sGar"></select></div>
-   <div><label>Väljyys (%)</label><input type="number" id="sEase" value="8"></div>
+   <div><label>Vaate</label><select id="sGar" onchange="sewEase()"></select></div>
+   <div><label>Väljyys: <b id="seV">8</b> %</label><input type="range" id="sEase" min="-25" max="30" value="8" oninput="$('seV').textContent=this.value"></div>
+   <div><label>Tulostus</label><label style="font-weight:400"><input type="checkbox" id="sTile" checked style="width:auto"> Jaa isot kaavat A4-paloihin liitosmerkein</label></div>
    <div><label>Saumanvara (cm)</label><input type="number" id="sSA" value="1.5" step="0.5"></div>
    <div><label>Helman käänne (cm)</label><input type="number" id="sHem" value="3" step="0.5"></div>
    <div><label>Kankaan leveys (cm)</label><input type="number" id="sFw" value="140"></div>
@@ -222,6 +234,8 @@ th{color:var(--r2);font-size:.85rem}
  <div id="v6" class="card hidden">
   <h2>6. Hihan ja kauluksen muotoilu</h2>
   <div id="shape"></div>
+  <div id="patOut"></div>
+  <div class="note noprint"><button class="btn sec" onclick="modelImg()">🖼 Muodosta mallikuva valmiista työstä</button> <a id="mdlDl" class="btn sec hidden" download="mallikuva.png">⬇ Lataa kuva</a><br><canvas id="mdlC" width="520" height="620" class="hidden" style="max-width:100%;margin-top:8px"></canvas></div>
   <div class="nav noprint"><button class="btn sec" onclick="go(5)">← Menekki</button><button class="btn" onclick="print()">🖨 Tulosta</button></div>
  </div>
 
@@ -264,10 +278,10 @@ drawGal();if(localStorage.getItem("ksp_proj"))$("savedBox").classList.remove("hi
 /* ---------- navigaatio ---------- */
 const NAMES=["Etusivu","1 Tyyppi","2 Mitat","3 Lanka","4 Kuva","5 Menekki","6 Muotoilu"];
 function go(n){step=n;$("v0").classList.toggle("hidden",n!==0);$("app").classList.toggle("hidden",n===0);
- if(n===6)shaping();
+ if(n===6){shaping();patScale()}
  if(n===7)pRender();
  if(n===3)yRender();
- if(n===1){impRender();$("pjInfo").classList.toggle("hidden",!S.person)}
+ if(n===1){impRender();$("pjInfo").classList.toggle("hidden",!S.person);renderRefs();shapeRec()}
  if(n===2)impRender();
  for(let i=1;i<=8;i++)$("v"+i).classList.toggle("hidden",i!==n);
  if(n===8)sewInit();
@@ -277,7 +291,7 @@ function go(n){step=n;$("v0").classList.toggle("hidden",n!==0);$("app").classLis
  if(n===4)prefill();
  if(n===5)menekki();
  scrollTo(0,0)}
-function newProject(){S={type:null,cat:null,sub:null,tech:0,part:"front",name:"",gw:0,gh:0,img:null,grid:null,pal:[],sel:0};$("catBox").classList.add("hidden");["t_knit","t_crochet","d_top","d_bottom"].forEach(i=>$(i).classList.remove("on"));$("dirBox").classList.add("hidden");$("ed").classList.add("hidden");go(1)}
+function newProject(){S={type:null,cat:null,sub:null,tech:0,part:"front",name:"",gw:0,gh:0,img:null,grid:null,pal:[],sel:0};$("catBox").classList.add("hidden");["t_knit","t_crochet","d_top","d_bottom"].forEach(i=>$(i).classList.remove("on"));$("dirBox").classList.add("hidden");$("ed").classList.add("hidden");S.refs=[];["p_txt","p_chest","p_len","p_st","p_rw","bodyShape"].forEach(i=>$(i).value="");go(1)}
 function setType(t){S.type=t;S.cat=null;S.sub=null;$("t_knit").classList.toggle("on",t==="knit");$("t_crochet").classList.toggle("on",t==="crochet");$("dirBox").classList.toggle("hidden",t!=="knit");
  $("catBox").classList.remove("hidden");$("catTitle").textContent=t==="knit"?"Kenelle / mihin?":"Mitä virkkaat?";$("techBox").classList.toggle("hidden",t!=="crochet");rCats();rTech()}
 function chips(el,list,sel,fn){el.innerHTML="";list.forEach(x=>{const c=document.createElement("div");c.className="chip"+(x===sel?" on":"");c.textContent=x;c.onclick=()=>fn(x);el.append(c)})}
@@ -295,7 +309,7 @@ function parts(){const c=+$("m_chest").value,e=+$("m_ease").value/100,l=+$("m_le
 function calcM(){$("easeV").textContent=$("m_ease").value;
  const kd=kind();$("mSweater").classList.toggle("hidden",kd!=="sweater");$("mLeg").classList.toggle("hidden",kd==="sweater");
  if(kd!=="sweater"&&isGarment()){document.querySelectorAll("#mLeg .lp").forEach(e=>e.classList.toggle("hidden",kd==="socks"));document.querySelectorAll("#mLeg .ls").forEach(e=>e.classList.toggle("hidden",kd==="pants"));
-  const e=1+(+$("l_ease").value||0)/100;S.gw=kd==="pants"?+((+$("l_hip").value*e)/2).toFixed(1):+((+$("l_ankle").value*e)/2).toFixed(1);S.gh=kd==="pants"?+$("l_inseam").value+ +$("l_rise").value:+$("l_shaft").value;return}
+  const e=1+(+$("l_ease").value||0)/100;$("crInfo").innerHTML=kd==="pants"?crotch().html:"";S.gw=kd==="pants"?+((+$("l_hip").value*e)/2).toFixed(1):+((+$("l_ankle").value*e)/2).toFixed(1);S.gh=kd==="pants"?+$("l_inseam").value+ +$("l_rise").value:+$("l_shaft").value;return}
  if(isGarment()){const p=parts();$("mRes").innerHTML=`Valmiin vaatteen ympärys: <b>${p.tot.toFixed(1)} cm</b><br>Etukappale: <b>${p.front[0].toFixed(1)} × ${p.front[1]} cm</b> · Hiha (arvio): <b>${p.sleeve[0].toFixed(1)} × ${p.sleeve[1]} cm</b>`;
   chips($("partChips"),PARTS.map(x=>x[1]),PARTS.find(x=>x[0]===S.part)[1],n=>{S.part=PARTS.find(x=>x[1]===n)[0];calcM()});
   const d=p[S.part];S.gw=+d[0].toFixed(1);S.gh=+d[1]}
@@ -375,15 +389,77 @@ function menekki(){if(!S.grid){$("menu").innerHTML='<div class="note warn">Muodo
  <div class="note warn">Menekki on arvio. Tee aina kokeilulaatta ja osta hieman varmuudeksi.</div>`}
 function copyList(){const t=$("menu").innerText;navigator.clipboard.writeText(t).then(()=>alert("Kopioitu!"))}
 
+/* ---------- mallikuvat, vartalonmuoto, ostettu ohje, mallikuva ---------- */
+document.addEventListener("input",e=>{if(e.target.id==="l_ease"){$("leV").textContent=e.target.value;if(step===2)calcM()}});
+function refAdd(inp){S.refs=S.refs||[];[...inp.files].slice(0,8).forEach(f=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,700/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);if(S.refs.length>=8)S.refs.shift();S.refs.push(c.toDataURL("image/jpeg",.75));renderRefs()};im.src=r.result};r.readAsDataURL(f)});inp.value=""}
+function renderRefs(){const el=$("refs");if(!el)return;el.innerHTML=(S.refs||[]).map((d,i)=>`<div style="text-align:center"><img src="${d}" style="height:110px;border-radius:8px;border:1px solid #d9c9a8;display:block"><button class="btn sm" onclick="refUse(${i})">🔲 Pikselikuvioksi</button> <button class="btn sec sm" onclick="S.refs.splice(${i},1);renderRefs()">✖</button></div>`).join("")}
+function refUse(i){if(!S.type){alert("Valitse ensin neule tai virkkaus ja tuote.");return}if(S.type==="knit"&&!S.dir){alert("Valitse ensin aloitussuunta.");return}const im=new Image();im.onload=()=>{S.img=im;go(2);go(4);if($("k_lock").checked)dimIn("w");makeGrid()};im.src=S.refs[i]}
+function patAdd(inp){const f=inp.files[0];if(!f)return;if(f.type.startsWith("image/")){const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{S.refs=S.refs||[];const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);S.refs.push(c.toDataURL("image/jpeg",.8));renderRefs()};im.src=r.result};r.readAsDataURL(f)}
+ else if(/\.(txt|md)$/i.test(f.name)){const r=new FileReader();r.onload=()=>{$("p_txt").value=r.result};r.readAsText(f)}else alert("Tuettuja ovat tekstitiedosto (.txt) ja kuva. PDF: kopioi teksti ja liitä se kenttään.");inp.value=""}
+const SHAPES={hourglass:["Tiimalasi: vyötärö on selvästi rintaa ja lantiota kapeampi. Istuva, vyötäröstä muotoiltu malli (kavennukset ja lisäykset) korostaa muotoa. Pieni väljyys 2–5 %.",4,"fitted"],
+ pear:["Päärynä: lantio on rintaa leveämpi. Valitse väljyys lantion mukaan tai tee helmaan lievä A-linjalevennys. Raglan tai passe tuo huomiota yläosaan. Väljyys noin 6–8 %.",7,"fitted"],
+ apple:["Omena: täyteläinen keskivartalo. Väljä, suora tai hieman levenevä malli ja pyöreä passe tuovat mukavuutta. Väljyys noin 12–15 %.",14,"yoke"],
+ rect:["Suorakaide: vyötärö ja lantio samaa luokkaa. Kevyt vyötärömuotoilu tuo muotoa, tai suora malli. Väljyys noin 8–10 %.",9,"topdown"],
+ invtri:["Käänteinen kolmio: hartiat tai rinta leveämpi kuin lantio. Raglan on sopiva; lisää helmaan hieman väljyyttä tai levennä A-linjaksi. Väljyys noin 10 %.",10,"topdown"],
+ athletic:["Urheilullinen: leveät hartiat ja vahvat olkavarret. Raglan tai satulaolka, väljyyttä olkavarteen. Väljyys noin 6–8 %.",7,"topdown"]};
+function shapeRec(){const v=$("bodyShape").value,t=SHAPES[v];$("shapeTxt").innerHTML=t?`<b>Suositus:</b> ${t[0]}`:"";$("shapeApply").classList.toggle("hidden",!t)}
+function shapeApply(){const t=SHAPES[$("bodyShape").value];if(!t)return;$("m_ease").value=t[1];$("l_ease").value=Math.min(25,t[1]);$("leV").textContent=$("l_ease").value;if(S.type==="knit")$("m_meth").value=t[2];calcM();alert("Väljyydeksi asetettu "+t[1]+" % ja rakenteeksi suositus. Voit säätää liukusäätimillä vaiheessa 2.")}
+function shapeDetect(){const p=PPL.find(x=>x.id===(S.person||curP));if(!p){alert("Valitse ensin henkilö, jonka mitat on tallennettu.");return}const m=p.m,b=m.bust||m.chest,w=m.waist,h=m.hip;if(!b||!w||!h){alert("Tarvitaan rinta-, vyötärö- ja lantiomitta.");return}
+ const d=h-b,wd=b-w;let s;if(w>=b-4&&w>=h-4)s="apple";else if(d>=5)s="pear";else if(d<=-5)s="invtri";else if(wd>=18)s="hourglass";else s="rect";$("bodyShape").value=s;shapeRec()}
+function patScale(){const el=$("patOut"),txt=$("p_txt").value.trim();if(!txt){el.innerHTML="";return}
+ const V=id=>+$(id).value||0,sw=kind()==="sweater",own=sw?V("m_chest")*(1+V("m_ease")/100):V("l_hip")*(1+V("l_ease")/100),ownL=sw?V("m_len"):V("l_inseam")+V("l_rise"),pc=V("p_chest"),pl=V("p_len"),ps=V("p_st"),pr=V("p_rw"),os=V("g_st"),or=V("g_rw");
+ if(!pc){el.innerHTML='<div class="note warn">Syötä vaiheessa 1 ohjeen valmiin työn ympärys, jotta silmukkamäärät voidaan skaalata.</div>';return}
+ const wf=own/pc*(ps?os/ps:1),hf=(pl?ownL/pl:1)*(pr?or/pr:1);let ns=0,nr=0;
+ const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+ let out=esc(txt).replace(/(\d+)(\s*)(silmukkaa|silmukan|silm\.|silm|sts|st|s)(?![a-zåäö])/gi,(a,n,sp,u)=>{ns++;return`<mark>${Math.round(n*wf)}</mark>${sp}${u}`}).replace(/(\d+)(\s*)(kerrosta|kerros|krs|rows?|rnds?)(?![a-zåäö])/gi,(a,n,sp,u)=>{nr++;return`<mark>${Math.round(n*hf)}</mark>${sp}${u}`});
+ el.innerHTML=`<h3>📄 Ostettu ohje skaalattuna omille mitoille</h3><div class="note">Leveyskerroin <b>${wf.toFixed(2)}</b> (valmis ympärys ${own.toFixed(0)} cm vs. ohjeen ${pc} cm${ps?", tiheys "+os+" vs. "+ps:""}), pituuskerroin <b>${hf.toFixed(2)}</b>. Muutettu ${ns} silmukkalukua ja ${nr} kerroslukua (merkitty).</div><div class="note warn">Jos ohjeessa on useita kokoja (esim. 88/96/104 s), poista muut koot tekstistä ja jätä vain yksi. Tarkista lisäysten ja kavennusten välit käsin ja tee kokeilulaatta.</div><div style="white-space:pre-wrap;background:#fffaf0;padding:10px;border-radius:8px;border:1px solid #d9c9a8">${out}</div>`}
+function domCol(){if(!S.grid||!S.pal.length)return null;const c={};S.grid.cells.forEach(v=>c[v]=(c[v]||0)+1);const k=Object.keys(c).sort((a,b)=>c[b]-c[a])[0];return S.pal[k].hex}
+function modelImg(){const cv=$("mdlC"),x=cv.getContext("2d"),V=id=>+$(id).value||0,k=kind(),sw=k==="sweater";calcM();
+ if(!isGarment()||k==="socks"){alert("Mallikuva tehdään vaatteille (villapaita, takki, housut). Sukille ei vielä.");return}
+ cv.classList.remove("hidden");x.clearRect(0,0,cv.width,cv.height);x.fillStyle="#fff8ec";x.fillRect(0,0,cv.width,cv.height);
+ const col=domCol()||"#b5483a",col2=S.pal&&S.pal[1]?S.pal[1].hex:col;let pts,cm;
+ const tx=(P,sc,ox,oy)=>P.map(p=>[ox+p[0]*sc,oy+p[1]*sc]),poly=(P,f)=>{x.beginPath();P.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();x.fillStyle=f;x.fill();x.strokeStyle="#0006";x.lineWidth=1.5;x.stroke()};
+ let lab="";
+ if(sw){const e=1+V("m_ease")/100,bw=V("m_chest")*e/2,sh=V("m_shw")||40,ln=V("m_len"),sl=V("m_slv"),aw=(V("m_arm")||30)*e/2,cw=(V("m_cuff")||18)*e/2,ad=V("m_armd")||22,a=.42;
+  const E=[sh/2+sl*Math.sin(a),4+sl*Math.cos(a)],n=[Math.cos(a),-Math.sin(a)];const wide=Math.max(bw/2+sl*Math.sin(a)+cw,bw/2+5)*2,sc=Math.min(420/wide,520/Math.max(ln+4,sl*Math.cos(a)+10)),ox=260,oy=40;
+  const side=s=>[[s*sh/2,4],[s*(E[0]+n[0]*cw/2*1),E[1]+n[1]*cw/2],[s*(E[0]-n[0]*cw/2),E[1]-n[1]*cw/2],[s*bw/2,ad]];
+  [-1,1].forEach(s=>poly(tx(side(s).map(p=>[p[0],p[1]]),sc,ox,oy),col));
+  const body=[[-sh/2,4],[-sh/4,0],[sh/4,0],[sh/2,4],[bw/2,ad],[bw/2,ln],[-bw/2,ln],[-bw/2,ad]];poly(tx(body,sc,ox,oy),col);
+  if(S.grid&&S.part==="front"||S.grid){x.save();x.beginPath();tx(body,sc,ox,oy).forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();x.clip();const g=S.grid,oc=document.createElement("canvas");oc.width=g.w;oc.height=g.h;const ox2=oc.getContext("2d");for(let j=0;j<g.h;j++)for(let i=0;i<g.w;i++){ox2.fillStyle=S.pal[g.cells[j*g.w+i]].hex;ox2.fillRect(i,j,1,1)}x.imageSmoothingEnabled=false;const gw=Math.min(bw,S.gw||bw)*sc,gh=Math.min(ln-6,S.gh||ln)*sc;x.drawImage(oc,ox-gw/2,oy+8*sc,gw,gh);x.restore()}
+  const nw=(V("m_neck")||18)/2,nd=V("m_nd")||7,c=V("m_col");x.beginPath();if(c==="v"){x.moveTo(ox-nw*sc,oy);x.lineTo(ox,oy+nd*sc);x.lineTo(ox+nw*sc,oy)}else{x.ellipse(ox,oy,nw*sc,nd*sc,0,0,Math.PI)}x.closePath();x.fillStyle="#fff8ec";x.fill();x.stroke();
+  const rag=["topdown","fitted"].includes($("m_meth").value),cardi=$("m_front").value==="cardi"||($("m_front").value==="auto"&&/tak(ki|it)/i.test(S.sub||""));x.save();x.strokeStyle="#0008";x.lineWidth=1.5;
+  if(rag)[-1,1].forEach(s=>{x.beginPath();x.moveTo(ox+s*nw*sc,oy+2);x.lineTo(ox+s*bw/2*sc,oy+ad*sc);x.stroke()});
+  if(cardi){const stw=(V("m_steek")||7)/(+$("g_st").value||20)*10*sc;x.fillStyle="#fff8ec";x.globalAlpha=.85;x.fillRect(ox-stw/2,oy+nd*sc,stw,(ln-nd)*sc);x.globalAlpha=1;x.setLineDash([5,4]);x.strokeStyle="#c00";x.beginPath();x.moveTo(ox,oy+nd*sc);x.lineTo(ox,oy+ln*sc);x.stroke();x.setLineDash([]);x.fillStyle="#c00";x.font="11px sans-serif";x.textAlign="center";x.fillText("steekki",ox,oy+(ln/2)*sc)}
+  x.restore();
+  x.fillStyle=col2;x.globalAlpha=.55;x.fillRect(ox-bw/2*sc,oy+(ln-5)*sc,bw*sc,5*sc);x.globalAlpha=1;
+  lab=`Rinta ${(bw*2).toFixed(0)} cm (väljyys ${V("m_ease")} %) · pituus ${ln} cm · hiha ${sl} cm`}
+ else{const e=1+V("l_ease")/100,hw=V("l_hip")*e/2,rise=V("l_rise")||27,ins=V("l_inseam")||78,aw=(V("l_ankle")||24)*e/2,H=rise+ins,sc=Math.min(420/(hw+6),540/H),ox=260,oy=40;
+  [-1,1].forEach(s=>poly(tx([[s*hw/2,0],[0,0],[0,rise],[s*1,H],[s*(1+aw),H]],sc,ox,oy),col));poly(tx([[-hw/2,0],[hw/2,0],[hw/2,4],[-hw/2,4]],sc,ox,oy),col2);
+  lab=`Lantio ${(hw*2).toFixed(0)} cm (väljyys ${V("l_ease")} %) · sisäsauma ${ins} cm`}
+ x.fillStyle="#3a2a1a";x.font="bold 15px sans-serif";x.textAlign="center";x.fillText((S.name||"Työ")+" – "+lab,260,600);
+ const dl=$("mdlDl");dl.href=cv.toDataURL("image/png");dl.classList.remove("hidden")}
+
 /* ---------- ompelukaavat ---------- */
-const SEWG={"Naiset":["T-paita / paita","Mekko","Hame","Housut","Pipo"],"Tytöt":["T-paita / paita","Mekko","Hame","Housut","Pipo"],"Miehet":["T-paita / paita","Housut","Pipo"],"Pojat":["T-paita / paita","Housut","Pipo"],"Lapset":["T-paita / paita","Mekko","Hame","Housut","Pipo"],"Vauvat":["T-paita / paita","Housut","Pipo"],"Koirat":["Koiran takki"],"Kissat":["Kissan paita"]};
+const SEWG={"Naiset":["T-paita / paita","Mekko","Hame","Housut","Pipo","Rintaliivit","Alushousut","Alushame","Yöpaita","Pyjama"],"Tytöt":["T-paita / paita","Mekko","Hame","Housut","Pipo","Alushousut","Alushame","Yöpaita","Pyjama"],"Miehet":["T-paita / paita","Housut","Pipo","Alushousut","Pyjama"],"Pojat":["T-paita / paita","Housut","Pipo","Alushousut","Pyjama"],"Lapset":["T-paita / paita","Mekko","Hame","Housut","Pipo","Alushousut","Yöpaita","Pyjama"],"Vauvat":["T-paita / paita","Housut","Pipo","Pyjama"],"Koirat":["Koiran takki"],"Kissat":["Kissan paita"]};
+const DEASE={"T-paita / paita":8,"Mekko":6,"Hame":4,"Housut":5,"Pipo":-10,"Rintaliivit":-10,"Alushousut":-8,"Alushame":4,"Yöpaita":15,"Pyjama":12,"Koiran takki":0,"Kissan paita":0};
+function sewGar(){$("sGar").innerHTML=SEWG[$("sCat").value].map(g=>`<option>${g}</option>`).join("");sewEase()}
+function sewEase(){const v=DEASE[$("sGar").value];if(v!==undefined){$("sEase").value=v;$("seV").textContent=v}}
 function sewInit(){$("sPer").innerHTML=PPL.length?PPL.map(p=>`<option value="${p.id}">${p.name}</option>`).join(""):"<option value=''>(lisää ensin henkilö Mittapankkiin)</option>";if(curP&&PPL.find(p=>p.id===curP))$("sPer").value=curP;
  if(!$("sCat").options.length){$("sCat").innerHTML=Object.keys(SEWG).map(c=>`<option>${c}</option>`).join("");sewGar()}}
-function sewGar(){$("sGar").innerHTML=SEWG[$("sCat").value].map(g=>`<option>${g}</option>`).join("")}
+function sewGar0(){}
 function bz(a,c,b,n=10){const r=[];for(let i=1;i<=n;i++){const t=i/n,u=1-t;r.push([u*u*a[0]+2*u*t*c[0]+t*t*b[0],u*u*a[1]+2*u*t*c[1]+t*t*b[1]])}return r}
 function parea(p){let s=0;p.forEach((a,i)=>{const b=p[(i+1)%p.length];s+=a[0]*b[1]-b[0]*a[1]});return s/2}
 function poff(p,d,fold){const s=parea(p)>0?1:-1,n=p.length,nm=(a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return s>0?[dy/l,-dx/l]:[-dy/l,dx/l]};
  return p.map((q,i)=>{const a=p[(i+n-1)%n],b=p[(i+1)%n],n1=nm(a,q),n2=nm(q,b),k=1+n1[0]*n2[0]+n1[1]*n2[1],f=d/Math.max(k,.3);let x=q[0]+(n1[0]+n2[0])*f,y=q[1]+(n1[1]+n2[1])*f;if(fold&&x<0)x=0;return[x,y]})}
+function sewTiles(no,p,o,x0,y0,W,H){const pw=19,ph=27,ov=1,nx=Math.ceil((W-ov)/(pw-ov)),ny=Math.ceil((H-ov)/(ph-ov)),f=a=>a.map(q=>(q[0]-x0+1).toFixed(2)+","+(q[1]-y0+1).toFixed(2)).join(" "),fi=f(o),fp=f(p.pts);let h=`<div style="break-before:page"><b>${no}. ${p.n}</b> — leikkaa ${p.qty} kpl${p.fold?" (taitteelle)":""}<br><small>${p.info}</small><br><small>Kaava on jaettu ${nx*ny} A4-palaan (${ny} riviä × ${nx} saraketta). Tulosta 100 % koossa, leikkaa tai taita reunat ristimerkkien mukaan ja liimaa palat yhteen siten, että viereisten palojen ristit ja viivat osuvat kohdakkain (1 cm limitys).</small></div>`;
+ for(let r=0;r<ny;r++)for(let c=0;c<nx;c++){const vx=c*(pw-ov),vy=r*(ph-ov),id=`${no}-${String.fromCharCode(65+r)}${c+1}`;let m="";
+  for(let gx=Math.ceil(vx/5)*5;gx<vx+pw;gx+=5)for(let gy=Math.ceil(vy/5)*5;gy<vy+ph;gy+=5)m+=`<path d="M${gx-.4} ${gy}h.8M${gx} ${gy-.4}v.8" stroke="#555" stroke-width=".05"/>`;
+  if(c<nx-1)m+=`<line x1="${vx+pw-ov}" y1="${vy}" x2="${vx+pw-ov}" y2="${vy+ph}" stroke="#c00" stroke-width=".05" stroke-dasharray=".4 .3"/><text x="${vx+pw-4.2}" y="${vy+ph/2}" font-size=".8" fill="#c00">→ ${no}-${String.fromCharCode(65+r)}${c+2}</text>`;
+  if(r<ny-1)m+=`<line x1="${vx}" y1="${vy+ph-ov}" x2="${vx+pw}" y2="${vy+ph-ov}" stroke="#c00" stroke-width=".05" stroke-dasharray=".4 .3"/><text x="${vx+pw/2-2}" y="${vy+ph-1.3}" font-size=".8" fill="#c00">↓ ${no}-${String.fromCharCode(66+r)}${c+1}</text>`;
+  if(c>0)m+=`<text x="${vx+.3}" y="${vy+ph/2}" font-size=".8" fill="#c00">← ${no}-${String.fromCharCode(65+r)}${c}</text>`;
+  if(r>0)m+=`<text x="${vx+pw/2-2}" y="${vy+1}" font-size=".8" fill="#c00">↑ ${no}-${String.fromCharCode(64+r)}${c+1}</text>`;
+  h+=`<div style="break-before:page"><svg style="max-width:100%;border:1px solid #bbb" width="${pw}cm" height="${ph}cm" viewBox="${vx} ${vy} ${pw} ${ph}"><polygon points="${fi}" fill="#fff8ec" stroke="#222" stroke-width=".08"/><polygon points="${fp}" fill="none" stroke="#b5483a" stroke-width=".06" stroke-dasharray=".4 .3"/>${m}<text x="${vx+pw/2-3}" y="${vy+ph/2+3}" font-size="2" fill="#0003">${id}</text>${vx===0&&vy===0?`<rect x=".3" y="3" width="1" height="1" fill="none" stroke="#000" stroke-width=".05"/><text x="1.5" y="3.8" font-size=".8">1 cm</text>`:""}</svg></div>`}
+ return h}
 function sewDraw(){
  const per=PPL.find(p=>p.id===$("sPer").value);if(!per){alert("Lisää ensin henkilö ja mitat Mittapankkiin.");return}
  const m=per.m,miss=[],cat=$("sCat").value,gar=$("sGar").value,e=(+$("sEase").value||0)/100,sa=+$("sSA").value||1.5,hem=+$("sHem").value||3,fw=+$("sFw").value||140;
@@ -395,29 +471,43 @@ function sewDraw(){
   P.push({n:"Selkäpala",qty:1,pts:[[0,0],[w1/2,0],[w2/2,bl],[0,bl]],fold:true,info:`Pituus ${bl} cm, kaulalla ${w1.toFixed(1)} cm, rinnalla ${w2.toFixed(1)} cm (taitteella → kerrottuna 2)`});
   P.push({n:"Vatsaläppä",qty:2,pts:[[0,0],[chest/4,0],[chest/4,bl*.45],[0,bl*.45]],info:"Kiinnitys tarranauhalla tai napeilla rinnan ja vatsan ympäri"});
   P.push({n:"Kaulus",qty:1,pts:[[0,0],[nk*(1+e),0],[nk*(1+e),4],[0,4]],info:"Taita kaksinkerroin"})}
- else if(gar==="T-paita / paita"||gar==="Mekko"){
-  const dress=gar==="Mekko",len=g(dress?"wtk":"len",dress?60:60,dress?"mekon pituus (vyötärö–polvi)":"vaatteen pituus")+(dress?(g("bwl",40,"selän pituus")):0),shw=g("shw",chest*.42,"hartioiden leveys"),nw=g("neck",chest*.19,"kaula-aukon leveys"),arm=g("arm",chest*.3,"olkavarsi"),cuff=g("cuff",chest*.2,"ranne"),slv=g("slv",chest*.62,"hihan pituus"),armd=g("armd",chest*.24,"kainalosyvyys"),sd=g("sdrop",4,"olkapään kaltevuus"),c=chest*(1+e)/4,sh=shw/2,nh=nw/2,flare=dress?chest*.12:0;
+ else if(["T-paita / paita","Mekko","Yöpaita","Pyjama"].includes(gar)){
+  const dress=gar==="Mekko"||gar==="Yöpaita",len=g(dress?"wtk":"len",60,dress?"mekon pituus (vyötärö–polvi)":"vaatteen pituus")+(dress?(g("bwl",40,"selän pituus")):gar==="Pyjama"?6:0),shw=g("shw",chest*.42,"hartioiden leveys"),nw=g("neck",chest*.19,"kaula-aukon leveys"),arm=g("arm",chest*.3,"olkavarsi"),cuff=g("cuff",chest*.2,"ranne"),slv=g("slv",chest*.62,"hihan pituus"),armd=g("armd",chest*.24,"kainalosyvyys"),sd=g("sdrop",4,"olkapään kaltevuus"),c=chest*(1+e)/4,sh=shw/2,nh=nw/2,flare=dress?chest*.12:0;
   const body=(nd,name)=>{const pts=[[0,nd],...bz([0,nd],[nh*.15,0+nd*.1],[nh,0],10)];pts.unshift();const arm_=bz([sh,sd],[sh-1,armd*.7],[c,armd],10);return{n:name,qty:1,fold:true,pts:[[0,nd],...bz([0,nd],[nh*.9,nd*.95],[nh,0]),[sh,sd],...arm_,[c+flare,len+hem-sa],[0,len+hem-sa]],info:`Leveys rinnalla ${(c*2).toFixed(1)} cm (taitteella), pituus ${len} cm + helma ${hem} cm`}};
   P.push(body(nh*.9+1,"Etukappale"));P.push(body(2,"Takakappale"));
   const W=arm*(1+e),cW=cuff*(1+e*.5),ch=armd*.6;
   P.push({n:"Hiha",qty:2,pts:[[0,ch],...bz([0,ch],[W*.1,ch*.1],[W/2,0]),...bz([W/2,0],[W*.9,ch*.1],[W,ch]),[W/2+cW/2,slv],[W/2-cW/2,slv]],info:`Hihan leveys ${W.toFixed(1)} cm, hihansuu ${cW.toFixed(1)} cm, pituus ${slv} cm`});
   P.push({n:"Kauluskaitale",qty:1,pts:[[0,0],[nw*Math.PI*.8,0],[nw*Math.PI*.8,4],[0,4]],info:"Joustavasta kankaasta, taita kaksinkerroin, venytä sovittaessa"})}
- else if(gar==="Hame"){
-  const w=g("waist",75,"vyötärö"),hip=g("hip",chest+6,"lantio"),L=g("wtk",55,"hameen pituus (vyötärö–polvi)"),hd=g("hl",20,"lantiopituus");
+ else if(gar==="Hame"||gar==="Alushame"){
+  const sl_=gar==="Alushame",w=g("waist",75,"vyötärö"),hip=g("hip",chest+6,"lantio"),L=g("wtk",55,"hameen pituus (vyötärö–polvi)")-(sl_?6:0),hd=g("hl",20,"lantiopituus");
   const wt=(w+4)/4,hp=hip*(1+e)/4;
-  P.push({n:"Hameen etu- ja takakappale",qty:2,fold:true,pts:[[0,0],[wt,0],[hp,hd],[hp+4,L+hem-sa],[0,L+hem-sa]],info:`Vyötärö ${(wt*4).toFixed(0)} cm, lantio ${(hp*4).toFixed(0)} cm, pituus ${L} cm + helma`});
+  P.push({n:sl_?"Alushameen etu- ja takakappale":"Hameen etu- ja takakappale",qty:2,fold:true,pts:[[0,0],[wt,0],[hp,hd],[hp+(sl_?6:4),L+hem-sa],[0,L+hem-sa]],info:`Vyötärö ${(wt*4).toFixed(0)} cm, lantio ${(hp*4).toFixed(0)} cm, pituus ${L} cm + helma${sl_?" (liukas, joustava tai viskoosikangas; reunaan pitsi)":""}`});
   P.push({n:"Vyötärökaitale",qty:1,pts:[[0,0],[w+4,0],[w+4,8],[0,8]],info:"Taita kaksinkerroin, vahvike sisään"})}
- else if(gar==="Housut"){
+ if(gar==="Housut"||gar==="Pyjama"){
   const w=g("waist",75,"vyötärö"),hip=g("hip",chest+6,"lantio"),rise=g("rise",27,"haaravälin pituus"),ins=g("inseam",78,"sisäsauma"),kn=g("knee",chest*.43,"polvi"),an=g("ankle",chest*.27,"nilkka"),hd=g("hl",20,"lantiopituus");
+    const tot_=g("totrise",rise*2+10,"vyötärö edestä taakse haarojen kautta"),mal_=["Miehet","Pojat"].includes(cat),fly_=mal_?(cat==="Pojat"?2:3):0,Tg_={Tg:tot_*(1+e/4)+fly_,male:mal_,fly:fly_};Tg_.raise=Tg_.Tg*.1;
   const hipW=hip*(1+e)/4,ww=(w*(1+e*.5))/4,ce=hip/16,dx=Math.max(0,(hipW-ww)/2),kw=kn*(1+e)/2,aw=an*(1+e)/2,xc=(hipW+ce)/2,ky=rise+ins/2,L=rise+ins+hem-sa;
   const pts=[[dx,0],[dx+ww+ce*.5,0],...bz([dx+ww+ce*.5,0],[hipW+ce*.8,rise*.6],[hipW+ce,rise]),[xc+kw/2,ky],[xc+aw/2,L],[xc-aw/2,L],[xc-kw/2,ky],[0,hd]];
-  P.push({n:"Etu-/takakappale (nilkkalaajuus)",qty:4,pts,info:`Sisäsauma ${ins} cm, haaravälin pituus ${rise} cm, lantio ${hip.toFixed(0)} cm. Takakappaleessa nosta takakeskeä 2 cm ja syvennä haaraa 2 cm`});
+  P.push({n:"Etu-/takakappale (nilkkalaajuus)",qty:4,pts,info:`Sisäsauma ${ins} cm, haaravälin pituus ${rise} cm, lantio ${hip.toFixed(0)} cm. Takakappaleessa nosta takakeskeä ${Math.max(2,Math.round(Tg_.raise))} cm ja syvennä haaraa 2 cm. Haaravälin kokonaismitta valmiina ${Tg_.Tg.toFixed(0)} cm (vyötärö edestä taakse haarojen kautta).${Tg_.male?` Etukappaleen haaraan lisätään etumuksen haaralisä ${Tg_.fly} cm (pidennä etuhaaran kaarta).`:""}`});
   P.push({n:"Vyötärökaitale",qty:1,pts:[[0,0],[w+4,0],[w+4,8],[0,8]],info:"Taita kaksinkerroin, kiristyskuminauha sisään"})}
+ else if(gar==="Rintaliivit"){
+  const bust=g("bust",chest,"rinnan täyteläisin kohta"),ub=g("underbust",chest*.85,"rinnan alapuolen ympärys"),diff=bust-ub,band=Math.round(ub/5)*5,cup=diff<11?"AA":diff<13?"A":diff<15?"B":diff<17?"C":diff<19?"D":diff<21?"E":"F";
+  const cw=9+diff*.5,ch=10+diff*.55;
+  P.push({n:"Kuppi (pehmeä kolmio-/jerseyliivi)",qty:2,pts:[[0,0],[cw*1.4,0],...bz([cw*1.4,0],[cw*1.35,ch*.7],[cw*.7,ch]),...bz([cw*.7,ch],[cw*.15,ch*.6],[0,0])],info:`Alusrinta ${band}, kuppi ${cup} (rinnan ja alusrinnan ero ${diff.toFixed(0)} cm). Leikkaa kankaasta sekä vuorista. Kaavan kuppi on suuntaa-antava, sovita aina koeliivi`});
+  P.push({n:"Selkäkaista",qty:2,pts:[[0,0],[ub*.9/2,0],[ub*.9/2,7],[0,7]],info:`Pituus ${(ub*.9/2).toFixed(1)} cm (negatiivinen väljyys, joustokangas), korkeus 7 cm; kiinnitä hakaset takakeskelle`});
+  P.push({n:"Olkain",qty:2,pts:[[0,0],[40,0],[40,3],[0,3]],info:"Pituus 40 cm (säädä), leveys 3 cm kaksinkerroin. Joustonauha sisään"});
+  P.push({n:"Kupin alareunan joustonauha",qty:2,pts:[[0,0],[cw*1.2,0],[cw*1.2,1.5],[0,1.5]],info:"Kupin alareunan tukeen"})}
+ else if(gar==="Alushousut"){
+  const hip=g("hip",chest+6,"lantio"),w=g("waist",75,"vyötärö"),rise=g("rise",27,"haaravälin pituus"),dc=Math.round(rise*.75*10)/10,hp=hip*(1+e)/4,wt=Math.min(hp,(w*(1+e))/4+2),gw=3.5;
+  const mk=(n,ext)=>{const D=dc+ext,hd=D*.55,leg=bz([hp,hd],[hp-1,D*.85],[gw,D]);const ll=leg.reduce((s,p,i)=>s+Math.hypot(p[0]-(i?leg[i-1][0]:hp),p[1]-(i?leg[i-1][1]:hd)),0)*2;return{n,qty:1,fold:true,pts:[[0,0],[wt,0],[hp,hd],...leg,[0,D]],info:`Lantio ${(hp*4).toFixed(0)} cm kokonaisuudessa, korkeus keskellä ${D.toFixed(1)} cm. Lahkeen joustavan reunan pituus noin ${(ll*.9).toFixed(0)} cm per lahje`}};
+  P.push(mk("Etukappale",0));P.push(mk("Takakappale",3));
+  P.push({n:"Haara (kaksinkertainen)",qty:1,pts:[[0,0],[gw*2,0],[gw*2,12],[0,12]],info:"Leveys 7 cm, pituus 12 cm; ompele etu-, taka- ja haaraosa yhteen. Vyötärölle joustin noin "+(w*.85).toFixed(0)+" cm"})}
  else if(gar==="Pipo"){
   const hd=g("head",56,"päänympärys"),hh=g("headh",hd*.4,"pään korkeus"),w=hd*.9/2,H=hh+4;
   P.push({n:"Pipon pala",qty:2,pts:[[0,H],[0,H*.35],...bz([0,H*.35],[0,0],[w/2,0]),...bz([w/2,0],[w,0],[w,H*.35]),[w,H]],info:`Leveys ${w.toFixed(1)} cm (joustokangas), korkeus ${H.toFixed(1)} cm`})}
  let area=0;const sv=P.map((p,i)=>{const o=poff(p.pts,sa,p.fold),xs=o.map(q=>q[0]),ys=o.map(q=>q[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),W=x1-x0+2,H=y1-y0+2;area+=Math.abs(parea(o))*(p.fold?2:1)*p.qty;
   const f=a=>a.map(q=>(q[0]-x0+1).toFixed(2)+","+(q[1]-y0+1).toFixed(2)).join(" "),gy=y0+(y1-y0)*.35;
+  if($("sTile").checked&&(W>19||H>27))return sewTiles(i+1,p,o,x0,y0,W,H);
   return `<div style="margin:14px 0;break-inside:avoid"><b>${i+1}. ${p.n}</b> — leikkaa ${p.qty*(p.fold?1:1)} kpl${p.fold?" (taitteelle)":""}<br><small>${p.info}</small><br>
   <svg style="max-width:100%" width="${W}cm" height="${H}cm" viewBox="0 0 ${W.toFixed(2)} ${H.toFixed(2)}"><polygon points="${f(o)}" fill="#fff8ec" stroke="#222" stroke-width=".08"/><polygon points="${f(p.pts)}" fill="none" stroke="#b5483a" stroke-width=".06" stroke-dasharray=".4 .3"/>
   <line x1="${(W/2).toFixed(2)}" y1="${(gy-y0+1+2).toFixed(2)}" x2="${(W/2).toFixed(2)}" y2="${(gy-y0+1+8).toFixed(2)}" stroke="#222" stroke-width=".06"/><text x="${(W/2+.5).toFixed(2)}" y="${(gy-y0+1+6).toFixed(2)}" font-size="1.1">suuntaviiva</text>${p.fold?`<text x="${1.2}" y="${H/2}" font-size="1.1" fill="#b5483a">taite</text>`:""}
@@ -469,10 +559,13 @@ const KK=["chest","waist","hip","len","slv","arm","cuff","neck","shw","armd","an
 function kidFill(){const h=$("kidSel").value;if(!h)return;const v=KID[h];KK.forEach((k,i)=>{const f=MF.find(x=>x[0]===k);[f[2],f[3]].forEach(id=>{if(id&&$(id))$(id).value=v[i]})});$("l_shaft").value=Math.round(v[10]*1.2+4);calcM()}
 
 /* ---------- jalkakohtainen menekki ---------- */
+function crotch(){const V=id=>+$(id).value||0,male=["Miehet","Pojat"].includes(S.cat),rise=V("l_rise")||27,tot=V("l_totrise")||rise*2+10,fly=male?(S.cat==="Pojat"?2:3):0,e=V("l_ease")/100,Tg=tot*(1+e/4)+fly,fr=Tg*.45,bk=Tg-fr;
+ const html=`<div class="note"><b>📏 Haaravälin kokonaismitta</b> (vyötärö edestä haarojen kautta taka-vyötärölle): mitattu <b>${tot.toFixed(0)} cm</b> → valmiissa housuissa <b>${Tg.toFixed(0)} cm</b>${male?` (sis. etumuksen haaralisä ${fly} cm)`:""}. Edessä vyötäröltä haaraan <b>${fr.toFixed(0)} cm</b>, takana <b>${bk.toFixed(0)} cm</b>, eli takakorotus ≈ <b>${(bk-fr).toFixed(0)} cm</b>.${male?" Miehen/pojan housuissa haaraan jätetään etumukseen lisätilaa, jotta etu ei kiristä.":""}</div>`;
+ return{male,rise,tot,fly,Tg,fr,bk,raise:bk-fr,html}}
 function legCounts(){
  const g=gauge(),st=c=>Math.round(c/10*g.st),rw=c=>Math.round(c/10*g.rw),ev=n=>n%2?n+1:n,V=id=>+$(id).value||0,e=1+V("l_ease")/100;
  if(kind()==="pants"){const W=ev(st(V("l_waist")*(1+V("l_ease")/200))),H=ev(st(V("l_hip")*e)),T=ev(st(V("l_thigh")*e)),K=ev(st(V("l_knee")*e)),Ak=ev(st(V("l_ankle")*e)),hr=rw(20),legSt=Math.max(T,H/2+4),ins=V("l_inseam");
-  const body=W*rw(4)+(W+H)/2*hr+H*Math.max(0,rw(V("l_rise"))-hr-rw(4)),leg=(legSt+K)/2*rw(ins/2)+(K+Ak)/2*rw(ins/2-5)+Ak*rw(5);
+  const body=W*rw(4)+(W+H)/2*hr+H*Math.max(0,rw(crotch().bk)-hr-rw(4)),leg=(legSt+K)/2*rw(ins/2)+(K+Ak)/2*rw(ins/2-5)+Ak*rw(5);
   return[["Runko (vyötärö–haara)",body],["Jalka 1",leg],["Jalka 2",leg]]}
  const C=ev(st(V("l_ankle")*(1+(V("l_ease")-8)/100))),F=ev(st(V("l_footc")*(1+(V("l_ease")-8)/100))),half=C/2,gus=Math.round(half/2),foot=V("l_foot"),toe=Math.round(foot*.2);
  const s=C*rw(V("l_shaft"))+half*half+half*half/2+(C+gus)*gus*2+F*rw(Math.max(0,foot*.55))+(F+16)/2*(Math.max(0,(F-16)/4)*1.5+2);
@@ -488,14 +581,15 @@ function legPatternUp(){
  const info=`<div class="note">Tiheys ${g.st} s × ${g.rw} krs / 10 cm · väljyys ${V("l_ease")} % · aloitus alhaalta.</div>`,warn='<div class="note warn">Laskennalliset ehdotukset: tee kokeilulaatta ja sovita työtä.</div>';
  if(kind()==="pants"){
   const W=ev(st(V("l_waist")*(1+V("l_ease")/200))),H=ev(st(V("l_hip")*e)),T=ev(st(V("l_thigh")*e)),K=ev(st(V("l_knee")*e)),Ak=ev(st(V("l_ankle")*e)),ins=V("l_inseam"),rise=V("l_rise"),band=4,cuff=5;
-  const hipRows=rw(20),dec=Math.max(0,(H-W)/2),legSt=Math.max(T,H/2+4),cast=legSt-H/2,k1=Math.max(0,(legSt-K)/2),k2=Math.max(0,(K-Ak)/2),r1=rw(ins/2),r2=rw(ins/2-cuff);
-  return `${info}<h3>Villahousut alhaalta ylös, suljettu neule</h3>`+li([
+  const cr=crotch(),hipRows=rw(20),dec=Math.max(0,(H-W)/2),legSt=Math.max(T,H/2+4),cast=legSt-H/2,k1=Math.max(0,(legSt-K)/2),k2=Math.max(0,(K-Ak)/2),r1=rw(ins/2),r2=rw(ins/2-cuff);
+  return `${info}${cr.html}<h3>Villahousut alhaalta ylös, suljettu neule</h3>`+li([
    `<b>Jalka (2 kpl):</b> luo <b>${Ak} s</b> nilkasta, liitä rengaseksi. Resori ${cuff} cm (${rw(cuff)} krs).`,
    `Levennä nilkasta polveen ${Ak} → <b>${K} s</b>: ${k2} × lisää 2 s (sisäsaumassa) joka ${ev2(k2,r2)}. krs (${r2} krs).`,
    `Polvesta reiteen ${K} → <b>${legSt} s</b>: ${k1} × lisää 2 s joka ${ev2(k1,r1)}. krs (${r1} krs). Sisäsauman pituus yhteensä ${ins} cm.`,
    `<b>Yhdistä jalat:</b> siirrä kummastakin jalasta ${cast} s haaran kohdalta odottamaan; jäljelle ${H/2} s per jalka. Yhdistä jalat samalle pyöröpuikolle: <b>${H} s</b>. Silmukoi haaran aukko umpeen.`,
-   `Neulo suoraan ${Math.max(0,rw(rise)-hipRows)} krs.`,
-   `Kavenna lantiolta vyötärölle ${H} → <b>${W} s</b>: ${dec} × kavenna 2 s (sivuilla) joka ${ev2(dec,hipRows)}. krs, ${hipRows} krs. Lisää takakorotukseksi 6 lyhennettyä kerrosta ennen vyötärökavennuksia.`,
+   `Neulo suoraan ${Math.max(0,rw(cr.fr)-hipRows)} krs (etumuksen haaravälistä ${cr.fr.toFixed(0)} cm vyötärölle asti, lantion ${hipRows} krs mukaan lukien takana ${rw(cr.bk)} krs).${cr.male?` <b>Etumuksen haaralisä:</b> lisää etukeskelle haaran kohdalle ${rw(cr.fly)} krs lisäpituutta ja 2 ylimääräistä silmukkaa kiilana (lisää 1 s joka 2. krs 2 kertaa), jotta etumus ei kiristä.`:""}`,
+   `<b>Takakorotus:</b> neulo takaosaan ${rw(cr.raise)} lyhennettyä kerrosta (≈ ${cr.raise.toFixed(0)} cm): jätä joka toisella kerroksella 3 s lisää neulomatta, ${Math.max(1,Math.round(rw(cr.raise)/2))} kertaa, jotta takavyötärö nousee korkealle ja housut pysyvät paikallaan istuessa. Kokonaismitta etuvyötäröltä taka-vyötärölle haarojen kautta: ${cr.Tg.toFixed(0)} cm.`,
+   `Kavenna lantiolta vyötärölle ${H} → <b>${W} s</b>: ${dec} × kavenna 2 s (sivuilla) joka ${ev2(dec,hipRows)}. krs, ${hipRows} krs.`,
    `Vyötärön joustin ${band} cm (${rw(band)} krs), päätä väljästi. Toinen jalka samoin.`])+warn}
  const C=ev(st(V("l_ankle")*(1+(V("l_ease")-8)/100))),F=ev(st(V("l_footc")*(1+(V("l_ease")-8)/100))),shaft=V("l_shaft"),foot=V("l_foot"),half=C/2,tn=Math.max(0,(F-16)/4),sr=Math.round(half/2);
  return `${info}<h3>Villasukat kärjestä ylös (lyhennetyt kerrokset kantapäässä)</h3>`+li([
@@ -514,11 +608,12 @@ function legPattern(){
  const warn='<div class="note warn">Laskennalliset ehdotukset: tee kokeilulaatta ja sovita työtä.</div>';
  if(kind()==="pants"){
   const W=ev(st(V("l_waist")*(1+V("l_ease")/200))),H=ev(st(V("l_hip")*e)),T=ev(st(V("l_thigh")*e)),K=ev(st(V("l_knee")*e)),Ak=ev(st(V("l_ankle")*e)),ins=V("l_inseam"),rise=V("l_rise"),band=4,cuff=5;
-  const hipRows=rw(20),inc=Math.max(0,(H-W)/2),legSt=Math.max(T,H/2+4),cast=legSt-H/2,k1=Math.max(0,(legSt-K)/2),k2=Math.max(0,(K-Ak)/2),r1=rw(ins/2),r2=rw(ins/2-cuff);
-  return `${info}<h3>Villahousut ylhäältä alas, suljettu neule</h3>`+li([
+  const cr=crotch(),hipRows=rw(20),inc=Math.max(0,(H-W)/2),legSt=Math.max(T,H/2+4),cast=legSt-H/2,k1=Math.max(0,(legSt-K)/2),k2=Math.max(0,(K-Ak)/2),r1=rw(ins/2),r2=rw(ins/2-cuff);
+  return `${info}${cr.html}<h3>Villahousut ylhäältä alas, suljettu neule</h3>`+li([
    `Luo <b>${W} s</b>, liitä rengaseksi. Joustinneule ${band} cm (${rw(band)} krs); tee kuminauhakotelo tai neulo nyöriaukot.`,
-   `Levennä lantiolle ${W} → <b>${H} s</b>: ${inc} × lisää 2 s (sivuilla) joka ${ev2(inc,hipRows)}. krs, ${hipRows} krs (≈ 20 cm). Lisää takakorotukseen 6 lyhennettyä kerrosta.`,
-   `Neulo suoraan ${H} s haarakohtaan asti: yhteensä ${rw(rise)} krs (${rise} cm vyötäröstä).`,
+   `Levennä lantiolle ${W} → <b>${H} s</b>: ${inc} × lisää 2 s (sivuilla) joka ${ev2(inc,hipRows)}. krs, ${hipRows} krs (≈ 20 cm).`,
+   `Lisää lantion jälkeen takakorotus: ${rw(cr.raise)} lyhennettyä kerrosta (≈ ${cr.raise.toFixed(0)} cm) takaosaan, jätä joka toisella kerroksella 3 s lisää neulomatta,    jotta takavyötärö nousee korkealle.`,
+   `Neulo suoraan ${H} s haarakohtaan asti: etuvyötäröltä haaraan ${cr.fr.toFixed(0)} cm = ${rw(cr.fr)} krs (takana ${rw(cr.bk)} krs). Kokonaismitta etuvyötäröltä haarojen kautta taka-vyötärölle ${cr.Tg.toFixed(0)} cm.${cr.male?` <b>Etumuksen haaralisä:</b> ${cr.fly} cm (${rw(cr.fly)} krs) lisäpituutta etukeskelle ja 2 ylimääräistä silmukkaa haaran kiilaksi.`:""}`,
    `<b>Jaa jalat:</b> kummallekin jalalle ${H/2} s ja luo haaraan ${cast} s. Jalka <b>${legSt} s</b>.`,
    `<b>Jalka:</b> kavenna polveen ${legSt} → <b>${K} s</b>: ${k1} × kavenna 2 s (sisäsaumassa) joka ${ev2(k1,r1)}. krs (${r1} krs).`,
    `Polvesta nilkkaan ${K} → <b>${Ak} s</b>: ${k2} × kavenna 2 s joka ${ev2(k2,r2)}. krs (${r2} krs).`,
@@ -535,9 +630,9 @@ function legPattern(){
   `<b>Kärki:</b> kavenna 4 s joka 2. krs ${Math.floor(tn/2)} kertaa, sitten joka krs ${Math.ceil(tn/2)} kertaa, kunnes 16 s. Silmukoi kärki umpeen (Kitchener).`])+warn}
 
 /* ---------- mittapankki ---------- */
-const MF=[["chest","Rinnanympärys","m_chest"],["waist","Vyötärö","m_waist","l_waist"],["hip","Lantio","m_hip","l_hip"],["len","Vaatteen pituus","m_len"],["slv","Hihan pituus","m_slv"],["arm","Olkavarren ympärys","m_arm"],["cuff","Ranteen ympärys","m_cuff"],["neck","Kaula-aukon leveys","m_neck"],["shw","Hartioiden leveys","m_shw"],["armd","Kainalosyvyys","m_armd"],["head","Päänympärys",null],["thigh","Reisi","l_thigh"],["knee","Polvi","l_knee"],["ankle","Nilkka","l_ankle"],["inseam","Sisäsauman pituus","l_inseam"],["rise","Haaravälin pituus","l_rise"],["outseam","Housun ulkopituus",null],["foot","Jalan pituus","l_foot"],["footc","Jalkaterän ympärys","l_footc"],
+const MF=[["chest","Rinnanympärys","m_chest"],["waist","Vyötärö","m_waist","l_waist"],["hip","Lantio","m_hip","l_hip"],["len","Vaatteen pituus","m_len"],["slv","Hihan pituus","m_slv"],["arm","Olkavarren ympärys","m_arm"],["cuff","Ranteen ympärys","m_cuff"],["neck","Kaula-aukon leveys","m_neck"],["shw","Hartioiden leveys","m_shw"],["armd","Kainalosyvyys","m_armd"],["head","Päänympärys",null],["thigh","Reisi","l_thigh"],["knee","Polvi","l_knee"],["ankle","Nilkka","l_ankle"],["inseam","Sisäsauman pituus","l_inseam"],["rise","Haaravälin pituus","l_rise"],["totrise","Vyötärö edestä haaran kautta taakse","l_totrise"],["outseam","Housun ulkopituus",null],["foot","Jalan pituus","l_foot"],["footc","Jalkaterän ympärys","l_footc"],
 ["height","Pituus (koko vartalo)",null],["weight","Paino (kg)",null],["bust","Rinnan täyteläisin kohta",null],["underbust","Rinnan alapuolen ympärys",null],["neckc","Kaulan ympärys",null],["bw","Selän leveys (hartiasauma-hartiasauma)",null],["fw","Etukappaleen leveys (kainalolinjalla)",null],["bwl","Selän pituus (niska–vyötärö)",null],["fwl","Etupituus (olkapää–vyötärö)",null],["nsh","Niska–olkapää (kaulan sivu–olkapää)",null],["sdrop","Olkapään kaltevuus (pudotus)",null],["cbnw","Niska–ranne (keskiselkä, käsi sivulla)",null],["armlu","Käsivarsi kainalosta ranteeseen",null],["armls","Olkapää–ranne",null],["elbow","Kyynärvarren ympärys",null],["forearm","Kyynärpään ympärys",null],["wrist","Ranteen ympärys (tarkka)",null],["hand","Kämmenen ympärys",null],["handl","Käden pituus",null],["fingl","Keskisormen pituus",null],["thumbl","Peukalon pituus",null],["hl","Lantiopituus (vyötärö–lantio)",null],["wtk","Vyötärö–polvi",null],["wtf","Vyötärö–lattia",null],["wta","Vyötärö–nilkka",null],["tl","Takaharalinjan pituus (etu–taka)",null],["calf","Pohkeen ympärys",null],["ankleh","Nilkan korkeus (nilkka–lattia)",null],["heel","Kantapää–nilkka-ympärys (kantakierto)",null],["instep","Jalan nilkkakierto (nilkka–kanta)",null],["footw","Jalkaterän leveys",null],["toel","Varpaiden pituus (isovarvas)",null],["shaftl","Sukan varren pituus (kantapää–säären)",null],["headh","Pään korkeus (leuka–päälaki)",null],["earc","Korva–korva (yli päälaen)",null],["frontb","Otsa–niska (pään yli)",null],["facew","Kasvojen leveys",null]];
-const MG=[["Yleistä",["height","weight"]],["Yläosa – ympärysmitat",["chest","bust","underbust","waist","hip","neckc","arm","elbow","forearm","cuff","wrist","hand"]],["Yläosa – leveys- ja korkeusmitat",["shw","bw","fw","neck","armd","sdrop","nsh","bwl","fwl","len","hl"]],["Käsivarsi",["slv","armlu","armls","cbnw","handl","fingl","thumbl"]],["Alaosa – ympärysmitat",["thigh","knee","calf","ankle"]],["Alaosa – pituusmitat",["inseam","outseam","rise","tl","wtk","wta","wtf"]],["Jalat ja sukat",["foot","footc","footw","instep","heel","ankleh","toel","shaftl"]],["Pää (pipot, otsanauhat)",["head","headh","earc","frontb","facew"]]];
+const MG=[["Yleistä",["height","weight"]],["Yläosa – ympärysmitat",["chest","bust","underbust","waist","hip","neckc","arm","elbow","forearm","cuff","wrist","hand"]],["Yläosa – leveys- ja korkeusmitat",["shw","bw","fw","neck","armd","sdrop","nsh","bwl","fwl","len","hl"]],["Käsivarsi",["slv","armlu","armls","cbnw","handl","fingl","thumbl"]],["Alaosa – ympärysmitat",["thigh","knee","calf","ankle"]],["Alaosa – pituusmitat",["inseam","outseam","rise","totrise","tl","wtk","wta","wtf"]],["Jalat ja sukat",["foot","footc","footw","instep","heel","ankleh","toel","shaftl"]],["Pää (pipot, otsanauhat)",["head","headh","earc","frontb","facew"]]];
 function kind(){if(S.type!=="knit"||!S.sub)return"sweater";return/sukat/i.test(S.sub)?"socks":/housut/i.test(S.sub)?"pants":"sweater"}
 function mval(f){const ids=kind()==="sweater"?[f[2],f[3]]:[f[3],f[2]];for(const i of ids)if(i&&$(i)&&$(i).value!=="")return +$(i).value}
 let PPL=JSON.parse(localStorage.getItem("ksp_people")||"[]"),curP=null;
@@ -568,7 +663,8 @@ function saveToPerson(){const n=prompt("Tallennetaanko nykyiset mitat henkilöll
 function methodPattern(){
  const g=gauge(),st=c=>Math.round(c/10*g.st),rw=c=>Math.round(c/10*g.rw),ev=n=>n%2?n+1:n,M0=$("m_meth").value,male=["Miehet","Pojat"].includes(S.cat),ease=+$("m_ease").value;const e=1+ease/100;let M=M0;if(S.dir==="bottom")M=({topdown:"bottomup",fitted:"fittedbu",yoke:"yokebu",saddle:"saddlebu"})[M0]||M0;
  const chest=+$("m_chest").value,len=+$("m_len").value,slv=+$("m_slv").value,rib=+$("m_rib").value,armd=+$("m_armd").value||22,shw=+$("m_shw").value||40,neck=+$("m_neck").value,nd=+$("m_nd").value,ch=+$("m_ch").value;
- const B=ev(st(chest*e)),A=ev(st(+$("m_arm").value*e)),C0=ev(st(+$("m_cuff").value*e)),u=ev(Math.max(2,st(4))),Y=rw(armd),hem=5,bodyCm=len-armd-hem;
+ const cardi=$("m_front").value==="cardi"||($("m_front").value==="auto"&&/tak(ki|it)/i.test(S.sub||"")),stk=cardi?Math.max(3,+$("m_steek").value||7):0;
+ const B=ev(st(chest*e))+stk,A=ev(st(+$("m_arm").value*e)),C0=ev(st(+$("m_cuff").value*e)),u=ev(Math.max(2,st(4))),Y=rw(armd),hem=5,bodyCm=len-armd-hem;
  const pick=ev(Math.round(st(Math.PI*(neck/2+nd)/2+neck)*.95)),T=B+2*A-4*u;
  const ev2=(n,rows)=>n>0?Math.max(1,Math.floor(rows/n)):0;
  const a0=6,f0=Math.max(4,Math.round((pick-2*a0)/2)),N=2*f0+2*a0,nf=Math.max(0,Math.round((B/2-u-f0)/2)),ns=Math.max(0,Math.round((A-u-a0)/2)),ef=ev2(nf,Y),es=ev2(ns,Y);
@@ -632,7 +728,13 @@ function methodPattern(){
    `<b>Hihat:</b> poimi satulan päästä ja etu- ja takakappaleen kainalokaarista ympäri <b>${A} s</b>. Neulo pyöröneuleena ja kavenna: ${slvInc} × 2 s joka ${slvEvery}. krs → ${C0} s. Resori ${rib} cm.`,
    `<b>Kaulus:</b> poimi ${pick} s kaula-aukon ympäri, resori ${ch} cm (${rw(ch)} krs).`,tips];
  }
- return `<div class="note">Tiheys ${g.st} s × ${g.rw} krs / 10 cm · väljyys ${ease} % · ${male?"mies":"nainen / muu"}. Rungon ympärys ${(chest*e).toFixed(0)} cm = ${B} s, hihan ympärys ${(+$("m_arm").value*e).toFixed(0)} cm = ${A} s, kainalo ${u} s.</div>${warn}<h3>${title}</h3>${li(steps)}<div class="note warn">Laskennalliset ehdotukset: tee kokeilulaatta ja sovita työtä. Säädä kainalosyvyyttä ja hartioiden leveyttä tarvittaessa.</div>`}
+ if(S.grid){const gw=S.grid.w,gh=S.grid.h,bs=B-stk,rep=Math.max(1,Math.floor(bs/gw)),left=bs-rep*gw,bh=rw(len-armd-hem),act=Math.min(gh,bh);
+  steps.splice(steps.length-1,0,`<b>Kuvio kuvasta:</b> ruudukko on ${gw} s × ${gh} krs (≈ ${(gw/g.st*10).toFixed(0)} × ${(gh/g.rw*10).toFixed(0)} cm). Rungon kuvioitavalle leveydelle ${bs} s mahtuu ${rep} toistoa${left?` + ${left} s reunaan (tasaa keskitys: ${Math.floor(left/2)} s kummallekin puolelle tai aloita kuvio sivusaumasta)`:""}. Runkoon mahtuu ${bh} krs: ${gh>bh?`kuviosta näkyy ${act} krs (rajaa kuvaa vaiheessa 4)`:"kuvio mahtuu kokonaan, loput neulotaan yksivärisenä"}. Aloita kuvio ${rw(hem)} krs resorin jälkeen. Hihoihin ja passeen voi neuloa kuvion toistuvan raidan tai jatkaa kuviota raglan-linjojen yli.`)}
+ if(cardi){title=title.replace(/villapaita/i,"villatakki")+", steekkaus edessä";steps.splice(steps.length-1,0,
+  `<b>Steekki (${stk} s):</b> neulo takin etukeskelle ${stk} silmukan levyinen steekki kaikissa kerroksissa pyöröneuleena. Neulo steekin silmukat vuorotellen kahdella värillä (a/b) tai raidoin, jotta se pysyy tasaisena. Keskisilmukka on leikkauskohta, sen molemmin puolin ${(stk-1)/2|0} s. Valitse tarkoituksella pariton luku.`,
+  `<b>Steekin vahvistus ja leikkaus:</b> kun neule on valmis ja huuhdeltu, ompele kaksi ommelriviä (tai virkkaa) steekin keskisilmukan molemmin puolin, 1 silmukan päähän leikkauskohdasta. Leikkaa keskisilmukkaa pitkin auki. Poimi etureunuksen silmukat reunaa pitkin (noin 3 s / 4 krs, siis ${Math.round(len*g.rw/10*.75)} s per etureuna) ja neulo ${ch} cm resori, johon napit/napinreiät. Käännä steekin reunat sisään ja ompele reunuksen taakse.`,
+  `<b>Takkina:</b> kauluksen ja resorin voi neuloa suoraan etureunuksen jatkoksi. Tuore leikkaus: käytä villalankaa, joka huopuu hieman (superwash-lanka vaatii vahvemman ompeleen).`)}
+ return `<div class="note">Tiheys ${g.st} s × ${g.rw} krs / 10 cm · väljyys ${ease} % · ${male?"mies":"nainen / muu"}${cardi?` · steekki ${stk} s`:""}. Rungon ympärys ${(chest*e).toFixed(0)} cm = ${B} s, hihan ympärys ${(+$("m_arm").value*e).toFixed(0)} cm = ${A} s, kainalo ${u} s.</div>${warn}<h3>${title}</h3>${li(steps)}<div class="note warn">Laskennalliset ehdotukset: tee kokeilulaatta ja sovita työtä. Säädä kainalosyvyyttä ja hartioiden leveyttä tarvittaessa.</div>`}
 
 /* ---------- muotoilu ---------- */
 function incText(n,rows,what){if(n<=0)return"Ei muutoksia.";const e=Math.max(1,Math.floor(rows/n));return`${n} × ${what==="lisäys"?"lisää":"vähennä"} 1 s molemmissa reunoissa joka ${e}. krs (${n*2} s yhteensä)`}
@@ -667,7 +769,7 @@ function shaping(){if(isGarment()&&kind()!=="sweater"){$("shape").innerHTML=(S.d
  <div class="card" style="margin:0"><h3>🧣 Kaulus</h3><p>${colTxt}</p><p>Silmukkamäärä sopii hyvin parillisena: ${pick%2?pick+1:pick} s.</p></div></div>`}
 
 /* ---------- tallennus ---------- */
-const IDS=["l_ease","l_waist","l_hip","l_rise","l_thigh","l_knee","l_inseam","l_ankle","l_footc","l_foot","l_shaft","m_meth","m_waist","m_hip","m_shw","m_armd","m_arm","m_rib","m_neck","m_nd","m_ch","m_col","m_chest","m_len","m_slv","m_ease","i_w","i_h","g_name","g_st","g_rw","g_nd","g_mg","g_sk","g_wa","k_w","k_h","k_n"];
+const IDS=["m_front","m_steek","p_txt","p_chest","p_len","p_st","p_rw","bodyShape","l_ease","l_waist","l_hip","l_rise","l_totrise","l_thigh","l_knee","l_inseam","l_ankle","l_footc","l_foot","l_shaft","m_meth","m_waist","m_hip","m_shw","m_armd","m_arm","m_rib","m_neck","m_nd","m_ch","m_col","m_chest","m_len","m_slv","m_ease","i_w","i_h","g_name","g_st","g_rw","g_nd","g_mg","g_sk","g_wa","k_w","k_h","k_n"];
 function saveP(){if(!S.type){alert("Aloita ensin projekti.");return}const f={};IDS.forEach(i=>f[i]=$(i).value);
  const o={S:{...S,img:null,grid:S.grid&&{w:S.grid.w,h:S.grid.h,cells:Array.from(S.grid.cells)}},f};
  try{localStorage.setItem("ksp_proj",JSON.stringify(o));alert("Projekti tallennettu tähän selaimeen.")}catch(e){alert("Tallennus epäonnistui (liian suuri).")}}
