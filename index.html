@@ -59,6 +59,30 @@ table{width:100%;border-collapse:collapse}
 th,td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--r2);font-size:.85rem}
 .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+@media(max-width:600px){
+ header{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px;padding-top:max(12px,env(safe-area-inset-top))}
+ header h1{grid-column:1/-1;font-size:1.15rem}
+ header button{min-height:44px;padding:8px 10px;white-space:normal}
+ main{padding:10px}
+ .card{padding:14px;border-radius:14px;margin-bottom:10px}
+ .hero{padding:22px 12px}
+ .hero h2{font-size:1.55rem!important}
+ .hero .btn{width:100%;padding:12px 14px}
+ .steps{scroll-snap-type:x proximity}
+ .steps button{flex:0 0 auto;min-height:42px;scroll-snap-align:start}
+ .big{grid-template-columns:1fr}
+ .big .chip{padding:16px 10px;font-size:1.05rem}
+ .nav{flex-direction:column;align-items:stretch}
+ .nav>span:empty{display:none}
+ .nav>span:not(:empty){display:flex;flex-wrap:wrap;gap:8px;width:100%}
+ .nav>button,.nav>span:not(:empty)>button,.nav>span:not(:empty)>label{flex:1 1 auto;text-align:center}
+ .btn{min-height:44px;padding:12px 18px;font-size:1rem}
+ .btn.sec{padding:9px 14px}
+ .btn.sm{padding:8px 12px}
+ .grid2{grid-template-columns:minmax(0,1fr)}
+ input[type=file],textarea{max-width:100%}
+ table{display:block;max-width:100%;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+}
 @media print{header,.steps,.nav,.noprint{display:none!important}body{background:#fff}.card{box-shadow:none!important;border:0!important;padding:0!important}main{padding:0!important;max-width:none!important;margin:0!important}}@page{size:A4;margin:8mm}
 </style>
 </head>
